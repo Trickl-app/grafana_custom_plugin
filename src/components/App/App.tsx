@@ -1,11 +1,10 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppRootProps } from '@grafana/data';
 import axios from 'axios';
 
 interface Recommendation {
   metric_name: string;
-  status: "pending";
+  status: string;
   problem_label: string;
   remaining_labels: string[];
   estimated_current_series: number;
@@ -15,11 +14,12 @@ interface Recommendation {
 }
 
 interface RecommendationProps {
-  rec: Recommendation
+  rec: Recommendation,
+  handleAccept: (rec: Recommendation) => void,
+  handleDecline: (rec: Recommendation) => void;
 }
 
-function Recommendation(props: RecommendationProps) {
-  const rec = props.rec
+function RecommendationItem({ rec, handleAccept, handleDecline }: RecommendationProps) {
   return (
     <li>
       <div>
@@ -31,14 +31,26 @@ function Recommendation(props: RecommendationProps) {
       <div>
         Estimated reduction metric series: {rec.estimated_reduction_percent}%
       </div>
-      <button>accept</button>
-      <button>reject</button>
+      <button onClick={() => {handleAccept(rec)}}>Accept</button>
+      <button onClick={() => {handleDecline(rec)}}>Decline</button>
     </li>
   )
 }
 
+type Decision = 'accepted' | 'declined' | 'pending';
+
 function App(_props: AppRootProps) {
   const [recs, setRecs] = useState<Recommendation[]>([]);
+
+  const handleAccept = (rec: Recommendation) => {
+    setRecs(recs.map(currRec => currRec === rec ? {...rec, status: 'accepted' } : currRec));
+    console.log(recs)
+  };
+
+  const handleDecline = (rec: Recommendation) => {
+    setRecs(recs.map(currRec => currRec === rec ? {...rec, status: 'declined' } : currRec));
+    console.log(recs)
+  };
 
   useEffect(() => {
     const getAndSetRecs = async () => {
@@ -56,7 +68,12 @@ function App(_props: AppRootProps) {
   return (
     <div>
       <h1>recommendations:</h1>
-      {recs.map(rec => <Recommendation rec={rec} />)}
+      {recs.map(rec => <RecommendationItem 
+      key={rec.metric_name + ' ' + rec.problem_label} 
+      rec={rec}
+      handleAccept={handleAccept}
+      handleDecline={handleDecline}
+    />)}
     </div>
   );
 }
