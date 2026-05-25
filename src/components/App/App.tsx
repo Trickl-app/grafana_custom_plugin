@@ -44,13 +44,15 @@ function App(_props: AppRootProps) {
 
   const handleAccept = (rec: Recommendation) => {
     setRecs(recs.map(currRec => currRec === rec ? {...rec, status: 'accepted' } : currRec));
-    console.log(recs)
   };
 
   const handleDecline = (rec: Recommendation) => {
     setRecs(recs.map(currRec => currRec === rec ? {...rec, status: 'declined' } : currRec));
-    console.log(recs)
   };
+
+  useEffect(() => {
+    console.log(recs);
+  }, [recs])
 
   useEffect(() => {
     const getAndSetRecs = async () => {
