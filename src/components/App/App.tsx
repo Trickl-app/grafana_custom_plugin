@@ -6,7 +6,7 @@ import axios from 'axios';
 interface Recommendation {
   metric_name: string;
   status: "pending";
-  problem_labels: string[];
+  problem_label: string;
   remaining_labels: string[];
   estimated_current_series: number;
   estimated_after_series: number;
@@ -26,7 +26,7 @@ function Recommendation(props: RecommendationProps) {
         Metric Name: {rec.metric_name}
       </div>
       <div>
-        Problem Labels: {rec.problem_labels}
+        Problem Labels: {rec.problem_label}
       </div>
       <div>
         Estimated reduction metric series: {rec.estimated_reduction_percent}%
