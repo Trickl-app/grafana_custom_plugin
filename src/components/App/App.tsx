@@ -43,11 +43,11 @@ function App(_props: AppRootProps) {
   const [recs, setRecs] = useState<Recommendation[]>([]);
 
   const handleAccept = (rec: Recommendation) => {
-    setRecs(recs.map(currRec => currRec === rec ? {...rec, status: 'accepted' } : currRec));
+    setRecs(prev => prev.map(currRec => currRec === rec ? {...rec, status: 'accepted' } : currRec));
   };
 
   const handleDecline = (rec: Recommendation) => {
-    setRecs(recs.map(currRec => currRec === rec ? {...rec, status: 'declined' } : currRec));
+    setRecs(prev => prev.map(currRec => currRec === rec ? {...rec, status: 'declined' } : currRec));
   };
 
   useEffect(() => {
