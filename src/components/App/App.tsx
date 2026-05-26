@@ -155,6 +155,7 @@ function App(_props: AppRootProps) {
       }
     });
     await axios.post('http://localhost:3001/api/acceptedRecommendations', output);
+    alert('The bike is operational! Check the VM Agent yaml file; it should now reflect your accepted recommendations.');
   };
 
   useEffect(() => {
