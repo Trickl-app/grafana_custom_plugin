@@ -2,7 +2,7 @@
   "name": "trickl",
   "version": "1.0.0",
   "scripts": {
-    "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
+    "build": "webpack -c ./.config/webpack/webpack.config.ts --env production && cp -r ./dist/. ../local_host_pipeline/grafana/plugin-dist/trickl-trickl-app/",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
