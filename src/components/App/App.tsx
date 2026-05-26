@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { AppRootProps } from '@grafana/data';
+import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 import axios from 'axios';
 
 interface Recommendation {
@@ -14,8 +16,8 @@ interface Recommendation {
 }
 
 interface RecommendationItemProps {
-  rec: Recommendation,
-  handleAccept: (rec: Recommendation) => void,
+  rec: Recommendation;
+  handleAccept: (rec: Recommendation) => void;
   handleDecline: (rec: Recommendation) => void;
 }
 
@@ -23,81 +25,142 @@ interface AcceptedLabels {
   [key: string]: {
     problemLabels: string[];
     allLabels: string[];
-  }
+  };
 }
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    padding: ${theme.spacing(2)};
+  `,
+  title: css`
+    margin-bottom: ${theme.spacing(2)};
+    font-size: ${theme.typography.h4.fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+  `,
+  list: css`
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(2)};
+  `,
+  card: css`
+    background: ${theme.colors.background.secondary};
+    border: 1px solid ${theme.colors.border.weak};
+    border-radius: ${theme.shape.borderRadius(2)};
+    padding: ${theme.spacing(2)};
+  `,
+  metricName: css`
+    font-size: ${theme.typography.h5.fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+    margin-bottom: ${theme.spacing(1)};
+    color: ${theme.colors.text.primary};
+  `,
+  detail: css`
+    color: ${theme.colors.text.secondary};
+    margin-bottom: ${theme.spacing(0.5)};
+    font-size: ${theme.typography.bodySmall.fontSize};
+  `,
+  explanation: css`
+    color: ${theme.colors.text.secondary};
+    font-style: italic;
+    margin-bottom: ${theme.spacing(1.5)};
+    font-size: ${theme.typography.bodySmall.fontSize};
+  `,
+  actions: css`
+    display: flex;
+    gap: ${theme.spacing(1)};
+    margin-top: ${theme.spacing(1.5)};
+  `,
+  statusAccepted: css`
+    color: ${theme.colors.success.text};
+    font-weight: ${theme.typography.fontWeightMedium};
+  `,
+  statusDeclined: css`
+    color: ${theme.colors.error.text};
+    font-weight: ${theme.typography.fontWeightMedium};
+  `,
+  submitRow: css`
+    margin-top: ${theme.spacing(3)};
+  `,
+});
+
 function RecommendationItem({ rec, handleAccept, handleDecline }: RecommendationItemProps) {
+  const styles = useStyles2(getStyles);
 
   const executeHandleAccept = (event: React.SyntheticEvent): void => {
     event.preventDefault();
     handleAccept(rec);
-  }
+  };
 
   const executeHandleDecline = (event: React.SyntheticEvent): void => {
     event.preventDefault();
     handleDecline(rec);
-  }
-  return (
-    <li>
-      <div>
-        Metric Name: {rec.metric_name}
-      </div>
-      <div>
-        Problem Labels: {rec.problem_label}
-      </div>
-      <div>
-        Estimated reduction metric series: {rec.estimated_reduction_percent}%
-      </div>
-      <button onClick={executeHandleAccept}>Accept</button>
-      <button onClick={executeHandleDecline}>Decline</button>
-    </li>
-  )
-}
+  };
 
-// type Decision = 'accepted' | 'declined' | 'pending';
+  return (
+    <li className={styles.card}>
+      <div className={styles.metricName}>{rec.metric_name}</div>
+      <div className={styles.detail}>Problem label: {rec.problem_label}</div>
+      <div className={styles.detail}>
+        Series: {rec.estimated_current_series} → {rec.estimated_after_series} ({rec.estimated_reduction_percent}% reduction)
+      </div>
+      <div className={styles.explanation}>{rec.explanation}</div>
+      {rec.status === 'pending' ? (
+        <div className={styles.actions}>
+          <Button variant="primary" size="sm" onClick={executeHandleAccept}>Accept</Button>
+          <Button variant="destructive" size="sm" onClick={executeHandleDecline}>Decline</Button>
+        </div>
+      ) : (
+        <div className={styles.actions}>
+          <span className={rec.status === 'accepted' ? styles.statusAccepted : styles.statusDeclined}>
+            {rec.status === 'accepted' ? 'Accepted' : 'Declined'}
+          </span>
+        </div>
+      )}
+    </li>
+  );
+}
 
 function App(_props: AppRootProps) {
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const styles = useStyles2(getStyles);
+
   const handleAccept = (rec: Recommendation) => {
-    setRecs(prev => prev.map(currRec => currRec === rec ? {...rec, status: 'accepted' } : currRec));
+    setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'accepted' } : currRec));
   };
 
   const handleDecline = (rec: Recommendation) => {
-    setRecs(prev => prev.map(currRec => currRec === rec ? {...rec, status: 'declined' } : currRec));
+    setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'declined' } : currRec));
   };
 
   const handleSubmit = async (event: React.SyntheticEvent) => {
-    event?.preventDefault();
-    if (recs.some(rec => rec.status === "pending")) {
-      alert("you have some pending decisions; please accept or reject all objects.");
+    event.preventDefault();
+    if (recs.some(rec => rec.status === 'pending')) {
+      alert('You have pending decisions. Please accept or decline all recommendations before submitting.');
       return;
     }
     const output: AcceptedLabels = {};
     recs.forEach(rec => {
-      if (rec.status === "accepted") {
+      if (rec.status === 'accepted') {
         if (rec.metric_name in output) {
           output[rec.metric_name].problemLabels.push(rec.problem_label);
         } else {
           output[rec.metric_name] = {
             problemLabels: [rec.problem_label],
-            allLabels: [...rec.remaining_labels, rec.problem_label]
-          }
+            allLabels: [...rec.remaining_labels, rec.problem_label],
+          };
         }
       }
-    })
-    console.log(output);
-    await axios.post("http://localhost:3001/api/acceptedRecommendations", output);
-  }
-
-  useEffect(() => {
-    console.log(recs);
-  }, [recs])
+    });
+    await axios.post('http://localhost:3001/api/acceptedRecommendations', output);
+  };
 
   useEffect(() => {
     const getAndSetRecs = async () => {
       try {
         const res = await axios.get<Recommendation[]>('http://localhost:3001/api/recommendations');
-        console.log('recommendations response:', res.data);
         setRecs(res.data);
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
@@ -107,15 +170,21 @@ function App(_props: AppRootProps) {
   }, []);
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h3>recommendations:</h3>
-      {recs.map(rec => <RecommendationItem 
-        key={rec.metric_name + ' ' + rec.problem_label} 
-        rec={rec}
-        handleAccept={handleAccept}
-        handleDecline={handleDecline}
-      />)}
-      <button type='submit'>Submit</button>
+    <form onSubmit={handleSubmit} className={styles.container}>
+      <h3 className={styles.title}>Recommendations</h3>
+      <ul className={styles.list}>
+        {recs.map(rec => (
+          <RecommendationItem
+            key={rec.metric_name + ' ' + rec.problem_label}
+            rec={rec}
+            handleAccept={handleAccept}
+            handleDecline={handleDecline}
+          />
+        ))}
+      </ul>
+      <div className={styles.submitRow}>
+        <Button type="submit" variant="primary">Submit</Button>
+      </div>
     </form>
   );
 }
