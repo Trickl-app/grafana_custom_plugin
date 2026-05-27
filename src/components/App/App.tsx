@@ -162,7 +162,9 @@ function App(_props: AppRootProps) {
     const getAndSetRecs = async () => {
       try {
         const res = await axios.get<Recommendation[]>('http://localhost:3001/api/recommendations');
-        setRecs(res.data);
+
+          // sorted by percentage, top down. 
+          setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
       }
