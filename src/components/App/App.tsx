@@ -101,7 +101,7 @@ function RecommendationItem({ rec, handleAccept, handleDecline }: Recommendation
 
   return (
     <li className={styles.card}>
-      <div className={styles.metricName}>{rec.metric_name}</div>
+      <div className={styles.metricName}>Metric Name: {rec.metric_name}</div>
       <div className={styles.detail}>Problem label: {rec.problem_label}</div>
       <div className={styles.detail}>
         Series: {rec.estimated_current_series} → {rec.estimated_after_series} ({rec.estimated_reduction_percent}% reduction)
