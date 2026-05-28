@@ -123,7 +123,10 @@ function RecommendationItem({ rec, handleAccept, handleDecline }: Recommendation
   );
 }
 
-function App(_props: AppRootProps) {
+function App(props: AppRootProps) {
+  // apiUrl is provisioned at container startup via apps.yaml → SMART_METRICS_API_URL.
+  // Fallback to localhost only for local development (docker-compose).
+  const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const styles = useStyles2(getStyles);
 
@@ -154,14 +157,14 @@ function App(_props: AppRootProps) {
         }
       }
     });
-    await axios.post('http://localhost:3001/api/acceptedRecommendations', output);
+    await axios.post(`${apiUrl}/api/acceptedRecommendations`, output);
     alert('The bike is operational! Check the VM Agent yaml file; it should now reflect your accepted recommendations.');
   };
 
   useEffect(() => {
     const getAndSetRecs = async () => {
       try {
-        const res = await axios.get<Recommendation[]>('http://localhost:3001/api/recommendations');
+        const res = await axios.get<Recommendation[]>(`${apiUrl}/api/recommendations`);
 
           // sorted by percentage, top down. 
           setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
