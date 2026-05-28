@@ -101,7 +101,7 @@ function RecommendationItem({ rec, handleAccept, handleDecline }: Recommendation
 
   return (
     <li className={styles.card}>
-      <div className={styles.metricName}>{rec.metric_name}</div>
+      <div className={styles.metricName}>Metric Name: {rec.metric_name}</div>
       <div className={styles.detail}>Problem label: {rec.problem_label}</div>
       <div className={styles.detail}>
         Series: {rec.estimated_current_series} → {rec.estimated_after_series} ({rec.estimated_reduction_percent}% reduction)
@@ -165,7 +165,9 @@ function App(props: AppRootProps) {
     const getAndSetRecs = async () => {
       try {
         const res = await axios.get<Recommendation[]>(`${apiUrl}/api/recommendations`);
-        setRecs(res.data);
+
+          // sorted by percentage, top down. 
+          setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
       }
