@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { AppRootProps } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
-import { Recommendation, AcceptedLabels } from './types';
+import { ActiveTab, Recommendation, AcceptedLabels, Aggregation } from './types';
 import { getStyles } from './styles';
 import RecommendationItem from './RecommendationItem';
 import Selections from './Selections';
+import AggregationItem from './AggregationItem';
 
 // const submitSelections = async (apiUrl: string, output: AcceptedLabels) => {
 //   await axios.post(`${apiUrl}/api/acceptedRecommendations`, output);
@@ -17,7 +18,10 @@ function App(props: AppRootProps) {
   // apiUrl is provisioned at container startup via apps.yaml → SMART_METRICS_API_URL.
   // Fallback to localhost only for local development (docker-compose).
   const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
+  const [activeTab, setActiveTab] = useState<ActiveTab>('recommendations');
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [aggs, setAggs] = useState<Aggregation[]>([]);
+  const [deletedAggs, setDeletedAggs] = useState<Aggregation[]>([]);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
   const styles = useStyles2(getStyles);
@@ -29,6 +33,24 @@ function App(props: AppRootProps) {
   const handleDecline = (rec: Recommendation) => {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'declined' } : currRec));
   };
+
+  const handleDeleteAgg = (agg: Aggregation) => {
+    setDeletedAggs(prev => [...prev, agg]);
+  };
+
+  const handleUndoDeleteAgg = (agg: Aggregation) => {
+    setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
+  };
+
+  const handleDeleteAggs = async() => {
+    const aggIds = deletedAggs.map(agg => agg.id);
+    console.log(aggIds)
+    try {
+      await axios.delete(`${apiUrl}/api/aggregations`, { data: aggIds });
+    } catch (err) {
+      console.error('Failed to send deleted aggregations:', err);
+    }
+  }
 
   const handleReset = (rec: Recommendation) => {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'pending' } : currRec));
@@ -83,7 +105,16 @@ function App(props: AppRootProps) {
         console.error('Failed to fetch recommendations:', err);
       }
     };
+    const getAndSetAggs = async () => {
+      try {
+        const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
+        setAggs([...response.data]);
+      } catch (err) {
+        console.error('Failed to fetch recommendations:', err);
+      }
+    };
     getAndSetRecs();
+    getAndSetAggs();
   }, []);
 
   if (showSelections) {
@@ -91,26 +122,71 @@ function App(props: AppRootProps) {
   }
 
   return (
-    <div className={styles.container}>
-      <h3 className={styles.title}>Recommendations</h3>
-      <ul className={styles.list}>
-        {recs.map(rec => (
-          <RecommendationItem
-            key={rec.metric_name + ' ' + rec.problem_label}
-            rec={rec}
-            handleAccept={handleAccept}
-            handleDecline={handleDecline}
-            handleReset={handleReset}
-          />
-        ))}
-      </ul>
-      <div className={styles.submitRow}>
-        <Button variant="primary" onClick={handleProceed}>Proceed</Button>
-        <Button variant="secondary" onClick={handleAcceptAll}>Mark all accepted</Button>
-        <Button variant="secondary" onClick={handleDeclineAll}>Mark all declined</Button>
-        <Button variant="secondary" onClick={handleResetAll}>Reset all</Button>
-      </div>
-    </div>
+    <>
+      <TabsBar>
+        <Tab
+          label="Recommendations"
+          active={activeTab === 'recommendations'}
+          onChangeTab={() => setActiveTab('recommendations')}
+        />
+        <Tab
+          label="Aggregations"
+          active={activeTab === 'aggregations'}
+          onChangeTab={() => setActiveTab('aggregations')}
+        />
+        <Tab
+          label="Dropped Labels"
+          active={activeTab === 'droppedLabels'}
+          onChangeTab={() => setActiveTab('droppedLabels')}
+        />
+      </TabsBar>
+      <TabContent>
+        {activeTab === 'recommendations' && (
+          <div className={styles.container}>
+            <ul className={styles.list}>
+              {recs.map(rec => (
+                <RecommendationItem
+                  key={rec.metric_name + ' ' + rec.problem_label}
+                  rec={rec}
+                  handleAccept={handleAccept}
+                  handleDecline={handleDecline}
+                  handleReset={handleReset}
+                />
+              ))}
+            </ul>
+            <div className={styles.submitRow}>
+              <Button variant="primary" onClick={handleProceed}>Proceed</Button>
+              <Button variant="secondary" onClick={handleAcceptAll}>Mark all accepted</Button>
+              <Button variant="secondary" onClick={handleDeclineAll}>Mark all declined</Button>
+              <Button variant="secondary" onClick={handleResetAll}>Reset all</Button>
+            </div>
+          </div>
+        )}
+        {activeTab === 'aggregations' && (
+          <div className={styles.container}>
+            <ul className={styles.list}>
+              {aggs.map(agg => (
+                <AggregationItem
+                  key={agg.metric_name + ' ' + agg.labels}
+                  agg={agg}
+                  deletedAggs={deletedAggs}
+                  handleDeleteAgg={handleDeleteAgg}
+                  handleUndoDeleteAgg={handleUndoDeleteAgg}
+                />
+              ))}
+            </ul>
+            <div className={styles.submitRow}>
+              <Button variant="primary" onClick={handleDeleteAggs}>Submit</Button>
+            </div>
+          </div>
+        )}
+        {activeTab === 'droppedLabels' && (
+          <div className={styles.container}>
+            <p>Dropped Labels page coming soon.</p>
+          </div>
+        )}
+      </TabContent>
+    </>
   );
 }
 

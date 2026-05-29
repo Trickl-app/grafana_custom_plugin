@@ -1,3 +1,5 @@
+export type ActiveTab = 'recommendations' | 'aggregations' | 'droppedLabels';
+
 export interface Recommendation {
   metric_name: string;
   status: string;
@@ -17,3 +19,15 @@ export interface AcceptedLabels {
     interval?: '1m' | '5m' | '15m';
   };
 }
+
+export interface Aggregation {
+  id: number;
+  metric_name: string;
+  labels: string[];
+  json_snippet: {
+    match: string,
+    outputs: string[],
+    without: string[],
+    interval: string
+  }
+};
