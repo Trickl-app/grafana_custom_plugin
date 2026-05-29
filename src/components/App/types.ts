@@ -21,6 +21,7 @@ export interface AcceptedLabels {
 }
 
 export interface Aggregation {
+  id: number;
   metric_name: string;
   labels: string[];
   json_snippet: {

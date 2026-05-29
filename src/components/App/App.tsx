@@ -42,6 +42,16 @@ function App(props: AppRootProps) {
     setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
   };
 
+  const handleDeleteAggs = async() => {
+    const aggIds = deletedAggs.map(agg => agg.id);
+    console.log(aggIds)
+    try {
+      await axios.delete(`${apiUrl}/api/aggregations`, { data: aggIds });
+    } catch (err) {
+      console.error('Failed to send deleted aggregations:', err);
+    }
+  }
+
   const handleReset = (rec: Recommendation) => {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'pending' } : currRec));
   };
@@ -97,7 +107,7 @@ function App(props: AppRootProps) {
     };
     const getAndSetAggs = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/api/aggregations`);
+        const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
         setAggs([...response.data]);
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
@@ -153,7 +163,7 @@ function App(props: AppRootProps) {
           </div>
         )}
         {activeTab === 'aggregations' && (
-          <form className={styles.container}>
+          <div className={styles.container}>
             <ul className={styles.list}>
               {aggs.map(agg => (
                 <AggregationItem
@@ -166,9 +176,9 @@ function App(props: AppRootProps) {
               ))}
             </ul>
             <div className={styles.submitRow}>
-              <Button type="submit" variant="primary">Submit</Button>
+              <Button variant="primary" onClick={handleDeleteAggs}>Submit</Button>
             </div>
-          </form>
+          </div>
         )}
         {activeTab === 'droppedLabels' && (
           <div className={styles.container}>
