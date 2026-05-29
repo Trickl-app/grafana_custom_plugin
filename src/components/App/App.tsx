@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, stylesFactory, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import axios from 'axios';
 
@@ -20,6 +20,17 @@ interface RecommendationItemProps {
   handleAccept: (rec: Recommendation) => void;
   handleDecline: (rec: Recommendation) => void;
 }
+
+interface Aggregation {
+  metric_name: string;
+  labels: string[];
+  json_snippet: {
+    match: string,
+    outputs: string[],
+    without: string[],
+    interval: string
+  }
+};
 
 interface AcceptedLabels {
   [key: string]: {
@@ -123,11 +134,36 @@ function RecommendationItem({ rec, handleAccept, handleDecline }: Recommendation
   );
 }
 
+interface AggregationItemProps {
+  agg: Aggregation;
+}
+
+function AggregationItem( { agg }: AggregationItemProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <>
+      <li className={styles.card}>
+        <div className={styles.metricName}>Metric Name: {agg.metric_name}</div>
+        <div className={styles.detail}>Interval: {agg.json_snippet.interval}</div>
+        { agg.labels.length > 0 ? 
+          (<div className={styles.detail}>Problem Labels: {agg.labels}</div>
+          ) : (<></>)
+        }
+        <div className={styles.actions}>
+          <Button variant="destructive" size="sm">Delete</Button>
+        </div>
+      </li>
+    </>
+  )
+}
+
 function App(props: AppRootProps) {
   // apiUrl is provisioned at container startup via apps.yaml → SMART_METRICS_API_URL.
   // Fallback to localhost only for local development (docker-compose).
   const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [aggs, setAggs] = useState<Aggregation[]>([])
   const styles = useStyles2(getStyles);
 
   const handleAccept = (rec: Recommendation) => {
@@ -172,26 +208,51 @@ function App(props: AppRootProps) {
         console.error('Failed to fetch recommendations:', err);
       }
     };
+    const getAndSetAggs = async () => {
+      try {
+        const response = await axios.get(`${apiUrl}/api/aggregations`)
+        setAggs([...response.data]);
+      } catch (err) {
+        console.error('Failed to fetch recommendations:', err);
+      }
+    }
     getAndSetRecs();
+    getAndSetAggs();
   }, []);
 
   return (
-    <form onSubmit={handleSubmit} className={styles.container}>
-      <h3 className={styles.title}>Recommendations</h3>
-      <ul className={styles.list}>
-        {recs.map(rec => (
-          <RecommendationItem
-            key={rec.metric_name + ' ' + rec.problem_label}
-            rec={rec}
-            handleAccept={handleAccept}
-            handleDecline={handleDecline}
-          />
-        ))}
-      </ul>
-      <div className={styles.submitRow}>
-        <Button type="submit" variant="primary">Submit</Button>
-      </div>
-    </form>
+    <>
+      <form onSubmit={handleSubmit} className={styles.container}>
+        <h3 className={styles.title}>Recommendations</h3>
+        <ul className={styles.list}>
+          {recs.map(rec => (
+            <RecommendationItem
+              key={rec.metric_name + ' ' + rec.problem_label}
+              rec={rec}
+              handleAccept={handleAccept}
+              handleDecline={handleDecline}
+            />
+          ))}
+        </ul>
+        <div className={styles.submitRow}>
+          <Button type="submit" variant="primary">Submit</Button>
+        </div>
+      </form>
+      <form className={styles.container}>
+        <h3 className={styles.title}>Aggregations</h3>
+        <ul className={styles.list}>
+          {aggs.map( agg => (
+            <AggregationItem 
+              key={agg.metric_name + ' ' + agg.labels}
+              agg={agg}
+            />
+          ))}
+        </ul>
+        <div className={styles.submitRow}>
+          <Button type="submit" variant="primary">Submit</Button>
+        </div>
+      </form>
+    </>
   );
 }
 
