@@ -59,6 +59,7 @@ function App(props: AppRootProps) {
           output[rec.metric_name].problemLabels.push(rec.problem_label);
         } else {
           output[rec.metric_name] = {
+            ...selections[rec.metric_name],
             problemLabels: [rec.problem_label],
             allLabels: [...rec.remaining_labels, rec.problem_label],
           };
