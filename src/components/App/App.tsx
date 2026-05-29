@@ -50,6 +50,8 @@ function App(props: AppRootProps) {
       resolvedRecs = recs.map(rec => rec.status === 'pending' ? { ...rec, status: 'declined' } : rec);
       setRecs(resolvedRecs);
     }
+    // we actually use object.entries in both other components and backend, might just be worth changing
+    // this here to that data structure in the first place and then saving the two entries calls.
     const output: AcceptedLabels = {};
     resolvedRecs.forEach(rec => {
       if (rec.status === 'accepted') {
@@ -84,7 +86,7 @@ function App(props: AppRootProps) {
   }, []);
 
   if (showSelections) {
-    return <Selections selections={selections} onBack={() => setShowSelections(false)} />;
+    return <Selections selections={selections} apiUrl={apiUrl} onBack={() => setShowSelections(false)} />;
   }
 
   return (
