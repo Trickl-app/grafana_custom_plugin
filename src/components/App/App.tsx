@@ -1,126 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
+import { AppRootProps } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
 import axios from 'axios';
-
-interface Recommendation {
-  metric_name: string;
-  status: string;
-  problem_label: string;
-  remaining_labels: string[];
-  estimated_current_series: number;
-  estimated_after_series: number;
-  estimated_reduction_percent: number;
-  explanation: string;
-}
-
-interface RecommendationItemProps {
-  rec: Recommendation;
-  handleAccept: (rec: Recommendation) => void;
-  handleDecline: (rec: Recommendation) => void;
-}
+import { mockRecs } from './mockData';
+import { Recommendation } from './types';
+import { getStyles } from './styles';
+import RecommendationItem from './RecommendationItem';
 
 interface AcceptedLabels {
   [key: string]: {
     problemLabels: string[];
     allLabels: string[];
   };
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(2)};
-  `,
-  title: css`
-    margin-bottom: ${theme.spacing(2)};
-    font-size: ${theme.typography.h4.fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
-  list: css`
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(2)};
-  `,
-  card: css`
-    background: ${theme.colors.background.secondary};
-    border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(2)};
-    padding: ${theme.spacing(2)};
-  `,
-  metricName: css`
-    font-size: ${theme.typography.h5.fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-    margin-bottom: ${theme.spacing(1)};
-    color: ${theme.colors.text.primary};
-  `,
-  detail: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(0.5)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  explanation: css`
-    color: ${theme.colors.text.secondary};
-    font-style: italic;
-    margin-bottom: ${theme.spacing(1.5)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  actions: css`
-    display: flex;
-    gap: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(1.5)};
-  `,
-  statusAccepted: css`
-    color: ${theme.colors.success.text};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
-  statusDeclined: css`
-    color: ${theme.colors.error.text};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
-  submitRow: css`
-    margin-top: ${theme.spacing(3)};
-  `,
-});
-
-function RecommendationItem({ rec, handleAccept, handleDecline }: RecommendationItemProps) {
-  const styles = useStyles2(getStyles);
-
-  const executeHandleAccept = (event: React.SyntheticEvent): void => {
-    event.preventDefault();
-    handleAccept(rec);
-  };
-
-  const executeHandleDecline = (event: React.SyntheticEvent): void => {
-    event.preventDefault();
-    handleDecline(rec);
-  };
-
-  return (
-    <li className={styles.card}>
-      <div className={styles.metricName}>Metric Name: {rec.metric_name}</div>
-      <div className={styles.detail}>Problem label: {rec.problem_label}</div>
-      <div className={styles.detail}>
-        Series: {rec.estimated_current_series} → {rec.estimated_after_series} ({rec.estimated_reduction_percent}% reduction)
-      </div>
-      <div className={styles.explanation}>{rec.explanation}</div>
-      {rec.status === 'pending' ? (
-        <div className={styles.actions}>
-          <Button variant="primary" size="sm" onClick={executeHandleAccept}>Accept</Button>
-          <Button variant="destructive" size="sm" onClick={executeHandleDecline}>Decline</Button>
-        </div>
-      ) : (
-        <div className={styles.actions}>
-          <span className={rec.status === 'accepted' ? styles.statusAccepted : styles.statusDeclined}>
-            {rec.status === 'accepted' ? 'Accepted' : 'Declined'}
-          </span>
-        </div>
-      )}
-    </li>
-  );
 }
 
 function App(props: AppRootProps) {
@@ -163,11 +54,13 @@ function App(props: AppRootProps) {
 
   useEffect(() => {
     const getAndSetRecs = async () => {
+      if (process.env.NODE_ENV === 'development') {
+        setRecs(mockRecs.sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
+        return;
+      }
       try {
         const res = await axios.get<Recommendation[]>(`${apiUrl}/api/recommendations`);
-
-          // sorted by percentage, top down. 
-          setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
+        setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
       }
