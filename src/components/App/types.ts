@@ -1,3 +1,5 @@
+export type ActiveTab = 'recommendations' | 'aggregations' | 'droppedLabels';
+
 export interface Recommendation {
   metric_name: string;
   status: string;
