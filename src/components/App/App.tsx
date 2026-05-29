@@ -3,22 +3,23 @@ import { AppRootProps } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
-import { Recommendation } from './types';
+import { Recommendation, AcceptedLabels } from './types';
 import { getStyles } from './styles';
 import RecommendationItem from './RecommendationItem';
+import Selections from './Selections';
 
-interface AcceptedLabels {
-  [key: string]: {
-    problemLabels: string[];
-    allLabels: string[];
-  };
-}
+// const submitSelections = async (apiUrl: string, output: AcceptedLabels) => {
+//   await axios.post(`${apiUrl}/api/acceptedRecommendations`, output);
+//   alert('The bike is operational! Check the VM Agent yaml file; it should now reflect your accepted recommendations.');
+// };
 
 function App(props: AppRootProps) {
   // apiUrl is provisioned at container startup via apps.yaml → SMART_METRICS_API_URL.
   // Fallback to localhost only for local development (docker-compose).
   const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [showSelections, setShowSelections] = useState(false);
+  const [selections, setSelections] = useState<AcceptedLabels>({});
   const styles = useStyles2(getStyles);
 
   const handleAccept = (rec: Recommendation) => {
@@ -29,7 +30,7 @@ function App(props: AppRootProps) {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'declined' } : currRec));
   };
 
-  const handleSubmit = async (event: React.SyntheticEvent) => {
+  const handleSubmit = (event: React.SyntheticEvent) => {
     event.preventDefault();
     if (recs.some(rec => rec.status === 'pending')) {
       alert('You have pending decisions. Please accept or decline all recommendations before submitting.');
@@ -48,8 +49,8 @@ function App(props: AppRootProps) {
         }
       }
     });
-    await axios.post(`${apiUrl}/api/acceptedRecommendations`, output);
-    alert('The bike is operational! Check the VM Agent yaml file; it should now reflect your accepted recommendations.');
+    setSelections(output);
+    setShowSelections(true);
   };
 
   useEffect(() => {
@@ -67,6 +68,10 @@ function App(props: AppRootProps) {
     };
     getAndSetRecs();
   }, []);
+
+  if (showSelections) {
+    return <Selections selections={selections} />;
+  }
 
   return (
     <form onSubmit={handleSubmit} className={styles.container}>

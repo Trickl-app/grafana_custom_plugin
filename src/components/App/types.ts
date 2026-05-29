@@ -8,3 +8,10 @@ export interface Recommendation {
   estimated_reduction_percent: number;
   explanation: string;
 }
+
+export interface AcceptedLabels {
+  [key: string]: {
+    problemLabels: string[];
+    allLabels: string[];
+  };
+}
