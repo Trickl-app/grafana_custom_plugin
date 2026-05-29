@@ -34,6 +34,10 @@ function App(props: AppRootProps) {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'pending' } : currRec));
   };
 
+  const handleAcceptAll = () => setRecs(prev => prev.map(rec => ({ ...rec, status: 'accepted' })));
+  const handleDeclineAll = () => setRecs(prev => prev.map(rec => ({ ...rec, status: 'declined' })));
+  const handleResetAll = () => setRecs(prev => prev.map(rec => ({ ...rec, status: 'pending' })));
+
   const handleSubmit = (event: React.SyntheticEvent) => {
     event.preventDefault();
     let resolvedRecs = recs;
@@ -100,6 +104,9 @@ function App(props: AppRootProps) {
       </ul>
       <div className={styles.submitRow}>
         <Button type="submit" variant="primary">Submit</Button>
+        <Button variant="secondary" onClick={handleAcceptAll}>Mark all accepted</Button>
+        <Button variant="secondary" onClick={handleDeclineAll}>Mark all declined</Button>
+        <Button variant="secondary" onClick={handleResetAll}>Reset all</Button>
       </div>
     </form>
   );

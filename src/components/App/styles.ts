@@ -56,5 +56,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   submitRow: css`
     margin-top: ${theme.spacing(3)};
+    display: flex;
+    gap: ${theme.spacing(1)};
   `,
 });
