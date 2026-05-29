@@ -86,7 +86,7 @@ function App(props: AppRootProps) {
   }, []);
 
   if (showSelections) {
-    return <Selections selections={selections} apiUrl={apiUrl} onBack={() => setShowSelections(false)} />;
+    return <Selections selections={selections} setSelections={setSelections} apiUrl={apiUrl} onBack={() => setShowSelections(false)} />;
   }
 
   return (

@@ -13,5 +13,7 @@ export interface AcceptedLabels {
   [key: string]: {
     problemLabels: string[];
     allLabels: string[];
+    aggregate?: boolean;
+    interval?: '1m' | '5m' | '15m';
   };
 }
