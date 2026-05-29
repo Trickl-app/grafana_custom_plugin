@@ -30,14 +30,25 @@ function App(props: AppRootProps) {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'declined' } : currRec));
   };
 
+  const handleReset = (rec: Recommendation) => {
+    setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'pending' } : currRec));
+  };
+
   const handleSubmit = (event: React.SyntheticEvent) => {
     event.preventDefault();
+    let resolvedRecs = recs;
     if (recs.some(rec => rec.status === 'pending')) {
-      alert('You have pending decisions. Please accept or decline all recommendations before submitting.');
-      return;
+      const proceed = window.confirm(
+        'You have pending recommendations. If you proceed, they will be marked as declined. Proceed?'
+      );
+      if (!proceed) {
+        return;
+      }
+      resolvedRecs = recs.map(rec => rec.status === 'pending' ? { ...rec, status: 'declined' } : rec);
+      setRecs(resolvedRecs);
     }
     const output: AcceptedLabels = {};
-    recs.forEach(rec => {
+    resolvedRecs.forEach(rec => {
       if (rec.status === 'accepted') {
         if (rec.metric_name in output) {
           output[rec.metric_name].problemLabels.push(rec.problem_label);
@@ -70,7 +81,7 @@ function App(props: AppRootProps) {
   }, []);
 
   if (showSelections) {
-    return <Selections selections={selections} />;
+    return <Selections selections={selections} onBack={() => setShowSelections(false)} />;
   }
 
   return (
@@ -83,6 +94,7 @@ function App(props: AppRootProps) {
             rec={rec}
             handleAccept={handleAccept}
             handleDecline={handleDecline}
+            handleReset={handleReset}
           />
         ))}
       </ul>

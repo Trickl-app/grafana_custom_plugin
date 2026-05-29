@@ -1,13 +1,14 @@
 import React from 'react';
-import { useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { AcceptedLabels } from './types';
 import { getStyles } from './styles';
 
 interface SelectionsProps {
   selections: AcceptedLabels;
+  onBack: () => void;
 }
 
-function Selections({ selections }: SelectionsProps) {
+function Selections({ selections, onBack }: SelectionsProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -21,6 +22,9 @@ function Selections({ selections }: SelectionsProps) {
           </li>
         ))}
       </ul>
+      <div className={styles.submitRow}>
+        <Button variant="secondary" onClick={onBack}>Back</Button>
+      </div>
     </div>
   );
 }

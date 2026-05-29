@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import { Recommendation } from './types';
 import { getStyles } from './styles';
 
@@ -7,9 +7,10 @@ interface RecommendationItemProps {
   rec: Recommendation;
   handleAccept: (rec: Recommendation) => void;
   handleDecline: (rec: Recommendation) => void;
+  handleReset: (rec: Recommendation) => void;
 }
 
-function RecommendationItem({ rec, handleAccept, handleDecline }: RecommendationItemProps) {
+function RecommendationItem({ rec, handleAccept, handleDecline, handleReset }: RecommendationItemProps) {
   const styles = useStyles2(getStyles);
 
   const executeHandleAccept = (event: React.SyntheticEvent): void => {
@@ -40,6 +41,7 @@ function RecommendationItem({ rec, handleAccept, handleDecline }: Recommendation
           <span className={rec.status === 'accepted' ? styles.statusAccepted : styles.statusDeclined}>
             {rec.status === 'accepted' ? 'Accepted' : 'Declined'}
           </span>
+          <IconButton name="history" tooltip="Change decision" onClick={() => handleReset(rec)} aria-label="Change decision" />
         </div>
       )}
     </li>
