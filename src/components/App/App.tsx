@@ -136,26 +136,36 @@ function RecommendationItem({ rec, handleAccept, handleDecline }: Recommendation
 
 interface AggregationItemProps {
   agg: Aggregation;
+  deletedAggs: Aggregation[];
+  handleDeleteAgg: (agg: Aggregation) => void;
+  handleUndoDeleteAgg: (agg: Aggregation) => void;
 }
 
-function AggregationItem( { agg }: AggregationItemProps) {
+function AggregationItem({ agg, deletedAggs, handleDeleteAgg, handleUndoDeleteAgg }: AggregationItemProps) {
   const styles = useStyles2(getStyles);
+  const isDeleted = deletedAggs.some(d => d.metric_name === agg.metric_name);
 
   return (
     <>
       <li className={styles.card}>
         <div className={styles.metricName}>Metric Name: {agg.metric_name}</div>
         <div className={styles.detail}>Interval: {agg.json_snippet.interval}</div>
-        { agg.labels.length > 0 ? 
-          (<div className={styles.detail}>Problem Labels: {agg.labels}</div>
-          ) : (<></>)
-        }
+        {agg.labels.length > 0 && (
+          <div className={styles.detail}>Problem Labels: {agg.labels}</div>
+        )}
         <div className={styles.actions}>
-          <Button variant="destructive" size="sm">Delete</Button>
+          {isDeleted ? (
+            <>
+              <span className={styles.statusDeclined}>Selected for Deletion</span>
+              <Button variant="secondary" size="sm" onClick={() => handleUndoDeleteAgg(agg)}>Undo</Button>
+            </>
+          ) : (
+            <Button variant="destructive" size="sm" onClick={() => handleDeleteAgg(agg)}>Delete</Button>
+          )}
         </div>
       </li>
     </>
-  )
+  );
 }
 
 function App(props: AppRootProps) {
@@ -163,7 +173,8 @@ function App(props: AppRootProps) {
   // Fallback to localhost only for local development (docker-compose).
   const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [aggs, setAggs] = useState<Aggregation[]>([])
+  const [aggs, setAggs] = useState<Aggregation[]>([]);
+  const [deletedAggs, setDeletedAggs] = useState<Aggregation[]>([]);
   const styles = useStyles2(getStyles);
 
   const handleAccept = (rec: Recommendation) => {
@@ -172,6 +183,14 @@ function App(props: AppRootProps) {
 
   const handleDecline = (rec: Recommendation) => {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'declined' } : currRec));
+  };
+
+  const handleDeleteAgg = (agg: Aggregation) => {
+    setDeletedAggs(prev => [...prev, agg]);
+  };
+
+  const handleUndoDeleteAgg = (agg: Aggregation) => {
+    setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
   };
 
   const handleSubmit = async (event: React.SyntheticEvent) => {
@@ -245,6 +264,9 @@ function App(props: AppRootProps) {
             <AggregationItem 
               key={agg.metric_name + ' ' + agg.labels}
               agg={agg}
+              deletedAggs={deletedAggs}
+              handleDeleteAgg={handleDeleteAgg}
+              handleUndoDeleteAgg={handleUndoDeleteAgg}
             />
           ))}
         </ul>
