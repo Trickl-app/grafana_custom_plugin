@@ -41,6 +41,32 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1.5)};
     font-size: ${theme.typography.bodySmall.fontSize};
   `,
+  sectionTitle: css`
+    color: ${theme.colors.text.primary};
+    font-weight: ${theme.typography.fontWeightMedium};
+    margin-top: ${theme.spacing(1.5)};
+    margin-bottom: ${theme.spacing(0.5)};
+  `,
+  textArea: css`
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    color: ${theme.colors.text.primary};
+    background: ${theme.colors.background.primary};
+    border: 1px solid ${theme.colors.border.medium};
+    border-radius: ${theme.shape.borderRadius(2)};
+    padding: ${theme.spacing(1)};
+    font-family: ${theme.typography.fontFamily};
+  `,
+  evidenceList: css`
+    color: ${theme.colors.text.secondary};
+    margin-top: 0;
+    padding-left: ${theme.spacing(3)};
+  `,
+  errorText: css`
+    color: ${theme.colors.error.text};
+    margin-top: ${theme.spacing(2)};
+  `,
   actions: css`
     display: flex;
     gap: ${theme.spacing(1)};

@@ -1,4 +1,4 @@
-export type ActiveTab = 'recommendations' | 'aggregations' | 'droppedLabels';
+export type ActiveTab = 'recommendations' | 'aggregations' | 'droppedLabels' | 'investigator';
 
 export interface Recommendation {
   metric_name: string;
@@ -31,3 +31,12 @@ export interface Aggregation {
     interval: string
   }
 };
+
+export interface AiInvestigationResult {
+  summary: string;
+  evidence: string[];
+  likelyCause: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  suggestedNextAction: string;
+  toolCallsUsed: string[];
+}
