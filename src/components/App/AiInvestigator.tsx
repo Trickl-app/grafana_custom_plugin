@@ -55,7 +55,7 @@ function AiInvestigator({ apiUrl }: AiInvestigatorProps) {
 
       {result && (
         <div className={styles.card}>
-          <div className={styles.metricName}> Cardinality risk: {result.riskLevel}</div>
+          <div className={styles.metricName}>Cardinality risk: {result.riskLevel}</div>
           <div className={styles.detail}>{result.summary}</div>
 
           <div className={styles.sectionTitle}>Evidence</div>
