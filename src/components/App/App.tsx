@@ -108,7 +108,8 @@ function App(props: AppRootProps) {
     const getAndSetAggs = async () => {
       try {
         const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
-        setAggs([...response.data]);
+        const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
+        setAggs([...aggregations]);
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
       }

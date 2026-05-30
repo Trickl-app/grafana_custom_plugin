@@ -29,5 +29,6 @@ export interface Aggregation {
     outputs: string[],
     without: string[],
     interval: string
-  }
+    aggregate: boolean;
+  };
 };
