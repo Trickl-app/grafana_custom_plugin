@@ -3,11 +3,12 @@ import { AppRootProps } from '@grafana/data';
 import { Button, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
-import { ActiveTab, Recommendation, AcceptedLabels, Aggregation } from './types';
+import { ActiveTab, Recommendation, AcceptedLabels, Aggregation, DroppedLabel } from './types';
 import { getStyles } from './styles';
 import RecommendationItem from './RecommendationItem';
 import Selections from './Selections';
 import AggregationItem from './AggregationItem';
+import DroppedLabelItem from './DroppedLabelItem';
 
 // const submitSelections = async (apiUrl: string, output: AcceptedLabels) => {
 //   await axios.post(`${apiUrl}/api/acceptedRecommendations`, output);
@@ -21,6 +22,7 @@ function App(props: AppRootProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('recommendations');
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [aggs, setAggs] = useState<Aggregation[]>([]);
+  const [droppedLabels, setDroppedLabels] = useState<DroppedLabel[]>([])
   const [deletedAggs, setDeletedAggs] = useState<Aggregation[]>([]);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
@@ -105,17 +107,19 @@ function App(props: AppRootProps) {
         console.error('Failed to fetch recommendations:', err);
       }
     };
-    const getAndSetAggs = async () => {
+    const getAndSetAggsAndDroppedLabels = async () => {
       try {
         const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
         const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
+        const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
         setAggs([...aggregations]);
+        setDroppedLabels([...droppedLabels])
       } catch (err) {
-        console.error('Failed to fetch recommendations:', err);
+        console.error('Failed to fetch aggregations:', err);
       }
     };
     getAndSetRecs();
-    getAndSetAggs();
+    getAndSetAggsAndDroppedLabels();
   }, []);
 
   if (showSelections) {
@@ -183,7 +187,14 @@ function App(props: AppRootProps) {
         )}
         {activeTab === 'droppedLabels' && (
           <div className={styles.container}>
-            <p>Dropped Labels page coming soon.</p>
+            <ul className={styles.list}>
+              {droppedLabels.map(entry => (
+                <DroppedLabelItem key={entry.id} entry={entry} />
+              ))}
+            </ul>
+            <div className={styles.submitRow}>
+              <Button variant="primary" onClick={() => {}}>Submit</Button>
+            </div>
           </div>
         )}
       </TabContent>

@@ -32,3 +32,15 @@ export interface Aggregation {
     aggregate: boolean;
   };
 };
+
+export interface DroppedLabel {
+  id: number;
+  metric_name: string;
+  labels: string[];
+  json_snippet: {
+    match: string,
+    outputs: string[],
+    without: string[],
+    interval: string
+  };
+}
