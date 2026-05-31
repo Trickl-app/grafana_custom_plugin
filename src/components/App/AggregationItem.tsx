@@ -1,6 +1,6 @@
 import React from 'react';
 import { Aggregation } from './types';
-import { Button, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { getStyles } from './styles';
 
 interface AggregationItemProps {

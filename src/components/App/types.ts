@@ -1,4 +1,4 @@
-export type ActiveTab = 'recommendations' | 'aggregations' | 'droppedLabels';
+export type ActiveTab = 'recommendations' | 'aggregations' | 'droppedLabels' | 'investigator';
 
 export interface Recommendation {
   metric_name: string;
@@ -33,6 +33,7 @@ export interface Aggregation {
   };
 };
 
+
 export interface DroppedLabel {
   id: number;
   metric_name: string;
@@ -43,4 +44,22 @@ export interface DroppedLabel {
     without: string[],
     interval: string
   };
+}
+
+export interface AiInvestigationResult {
+  answer: string;
+  questionClass:
+    | 'cardinality_spike'
+    | 'recommendation_review'
+    | 'grafana_usage'
+    | 'metric_series_breakdown'
+    | 'aggregation_rules'
+    | 'decision_history'
+    | 'general';
+  summary: string;
+  evidence: string[];
+  likelyCause: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  suggestedNextAction: string;
+  toolCallsUsed: string[];
 }
