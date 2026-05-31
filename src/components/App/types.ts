@@ -33,6 +33,14 @@ export interface Aggregation {
 };
 
 export interface AiInvestigationResult {
+  questionClass:
+    | 'cardinality_spike'
+    | 'recommendation_review'
+    | 'grafana_usage'
+    | 'metric_series_breakdown'
+    | 'aggregation_rules'
+    | 'decision_history'
+    | 'general';
   summary: string;
   evidence: string[];
   likelyCause: string;
