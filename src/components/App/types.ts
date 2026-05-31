@@ -33,6 +33,7 @@ export interface Aggregation {
 };
 
 export interface AiInvestigationResult {
+  answer: string;
   questionClass:
     | 'cardinality_spike'
     | 'recommendation_review'

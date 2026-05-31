@@ -35,6 +35,20 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(0.5)};
     font-size: ${theme.typography.bodySmall.fontSize};
   `,
+  answerText: css`
+    color: ${theme.colors.text.primary};
+    margin-bottom: ${theme.spacing(2)};
+    line-height: 1.5;
+    white-space: pre-wrap;
+  `,
+  metadataRow: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(1.5)};
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    margin-bottom: ${theme.spacing(0.75)};
+  `,
   explanation: css`
     color: ${theme.colors.text.secondary};
     font-style: italic;
