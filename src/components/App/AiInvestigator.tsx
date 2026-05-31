@@ -77,9 +77,14 @@ function AiInvestigator({ apiUrl }: AiInvestigatorProps) {
 
       {result && (
         <div className={styles.card}>
-          <div className={styles.metricName}>Cardinality risk: {result.riskLevel}</div>
-          <div className={styles.detail}>Question class: {result.questionClass}</div>
-          <div className={styles.detail}>{result.summary}</div>
+          <div className={styles.metricName}>Metropolis</div>
+          <div className={styles.answerText}>{result.answer}</div>
+
+          <div className={styles.metadataRow}>
+            <span>Risk: {result.riskLevel}</span>
+            <span>Question type: {result.questionClass}</span>
+          </div>
+          <div className={styles.detail}>Tools used: {result.toolCallsUsed.join(', ') || 'none'}</div>
 
           <div className={styles.sectionTitle}>Evidence</div>
           <ul className={styles.evidenceList}>
@@ -87,12 +92,6 @@ function AiInvestigator({ apiUrl }: AiInvestigatorProps) {
               <li key={item}>{item}</li>
             ))}
           </ul>
-
-          <div className={styles.sectionTitle}>Likely cause</div>
-          <div className={styles.detail}>{result.likelyCause}</div>
-
-          <div className={styles.sectionTitle}>Suggested next action</div>
-          <div className={styles.detail}>{result.suggestedNextAction}</div>
         </div>
       )}
     </div>
