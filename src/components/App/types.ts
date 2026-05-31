@@ -29,8 +29,22 @@ export interface Aggregation {
     outputs: string[],
     without: string[],
     interval: string
-  }
+    aggregate: boolean;
+  };
 };
+
+
+export interface DroppedLabel {
+  id: number;
+  metric_name: string;
+  labels: string[];
+  json_snippet: {
+    match: string,
+    outputs: string[],
+    without: string[],
+    interval: string
+  };
+}
 
 export interface AiInvestigationResult {
   answer: string;

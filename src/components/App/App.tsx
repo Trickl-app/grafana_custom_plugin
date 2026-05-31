@@ -3,12 +3,14 @@ import { AppRootProps } from '@grafana/data';
 import { Button, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
-import { ActiveTab, Recommendation, AcceptedLabels, Aggregation } from './types';
+import { ActiveTab, Recommendation, AcceptedLabels, Aggregation, DroppedLabel } from './types';
 import { getStyles } from './styles';
 import RecommendationItem from './RecommendationItem';
 import Selections from './Selections';
 import AggregationItem from './AggregationItem';
+import DroppedLabelItem from './DroppedLabelItem';
 import AiInvestigator from './AiInvestigator';
+
 
 // const submitSelections = async (apiUrl: string, output: AcceptedLabels) => {
 //   await axios.post(`${apiUrl}/api/acceptedRecommendations`, output);
@@ -22,7 +24,9 @@ function App(props: AppRootProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('recommendations');
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [aggs, setAggs] = useState<Aggregation[]>([]);
+  const [droppedLabels, setDroppedLabels] = useState<DroppedLabel[]>([])
   const [deletedAggs, setDeletedAggs] = useState<Aggregation[]>([]);
+  const [deletedLabels, setDeletedLabels] = useState<{ id: number; label: string }[]>([]);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
   const styles = useStyles2(getStyles);
@@ -41,6 +45,23 @@ function App(props: AppRootProps) {
 
   const handleUndoDeleteAgg = (agg: Aggregation) => {
     setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
+  };
+
+  const handleDeleteLabel = (entry: DroppedLabel, label: string) => {
+    setDeletedLabels(prev => [...prev, { id: entry.id, label }]);
+  };
+
+  const handleUndoDeleteLabel = (entry: DroppedLabel, label: string) => {
+    setDeletedLabels(prev => prev.filter(d => !(d.id === entry.id && d.label === label)));
+  };
+
+  const handleDeleteLabels = async () => {
+    const labelIds = [...new Set(deletedLabels.map(d => d.id))];
+    try {
+      await axios.delete(`${apiUrl}/api/aggregations`, { data: labelIds });
+    } catch (err) {
+      console.error('Failed to send deleted labels:', err);
+    }
   };
 
   const handleDeleteAggs = async() => {
@@ -106,16 +127,19 @@ function App(props: AppRootProps) {
         console.error('Failed to fetch recommendations:', err);
       }
     };
-    const getAndSetAggs = async () => {
+    const getAndSetAggsAndDroppedLabels = async () => {
       try {
         const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
-        setAggs([...response.data]);
+        const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
+        const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
+        setAggs([...aggregations]);
+        setDroppedLabels([...droppedLabels])
       } catch (err) {
-        console.error('Failed to fetch recommendations:', err);
+        console.error('Failed to fetch aggregations:', err);
       }
     };
     getAndSetRecs();
-    getAndSetAggs();
+    getAndSetAggsAndDroppedLabels();
   }, []);
 
   if (showSelections) {
@@ -188,7 +212,20 @@ function App(props: AppRootProps) {
         )}
         {activeTab === 'droppedLabels' && (
           <div className={styles.container}>
-            <p>Dropped Labels page coming soon.</p>
+            <ul className={styles.list}>
+              {droppedLabels.map(entry => (
+                <DroppedLabelItem
+                  key={entry.id}
+                  entry={entry}
+                  deletedLabels={deletedLabels}
+                  handleDeleteLabel={handleDeleteLabel}
+                  handleUndoDeleteLabel={handleUndoDeleteLabel}
+                />
+              ))}
+            </ul>
+            <div className={styles.submitRow}>
+              <Button variant="primary" onClick={handleDeleteLabels}>Submit</Button>
+            </div>
           </div>
         )}
         {activeTab === 'investigator' && (
