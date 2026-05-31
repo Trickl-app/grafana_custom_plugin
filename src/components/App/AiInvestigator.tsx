@@ -8,6 +8,14 @@ interface AiInvestigatorProps {
   apiUrl: string;
 }
 
+const suggestedQuestions = [
+  'Why did cardinality spike today?',
+  'What should I review first?',
+  'Is request_id used in Grafana?',
+  'Which metrics have the most series?',
+  'What aggregation rules already exist?',
+];
+
 function AiInvestigator({ apiUrl }: AiInvestigatorProps) {
   const styles = useStyles2(getStyles);
   const [question, setQuestion] = useState('Why did cardinality spike today?');
@@ -44,6 +52,20 @@ function AiInvestigator({ apiUrl }: AiInvestigatorProps) {
           value={question}
           onChange={event => setQuestion(event.currentTarget.value)}
         />
+        <div className={styles.suggestionTitle}>Suggested questions</div>
+        <div className={styles.suggestionList}>
+          {suggestedQuestions.map(suggestedQuestion => (
+            <Button
+              key={suggestedQuestion}
+              size="sm"
+              variant="secondary"
+              type="button"
+              onClick={() => setQuestion(suggestedQuestion)}
+            >
+              {suggestedQuestion}
+            </Button>
+          ))}
+        </div>
         <div className={styles.submitRow}>
           <Button variant="primary" onClick={askMetropolis} disabled={isLoading || question.trim() === ''}>
             {isLoading ? 'Investigating...' : 'Ask'}
@@ -56,6 +78,7 @@ function AiInvestigator({ apiUrl }: AiInvestigatorProps) {
       {result && (
         <div className={styles.card}>
           <div className={styles.metricName}>Cardinality risk: {result.riskLevel}</div>
+          <div className={styles.detail}>Question class: {result.questionClass}</div>
           <div className={styles.detail}>{result.summary}</div>
 
           <div className={styles.sectionTitle}>Evidence</div>

@@ -63,6 +63,17 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: 0;
     padding-left: ${theme.spacing(3)};
   `,
+  suggestionTitle: css`
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    margin-top: ${theme.spacing(1.5)};
+    margin-bottom: ${theme.spacing(1)};
+  `,
+  suggestionList: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(1)};
+  `,
   errorText: css`
     color: ${theme.colors.error.text};
     margin-top: ${theme.spacing(2)};
