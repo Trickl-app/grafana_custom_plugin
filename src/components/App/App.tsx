@@ -24,6 +24,7 @@ function App(props: AppRootProps) {
   const [aggs, setAggs] = useState<Aggregation[]>([]);
   const [droppedLabels, setDroppedLabels] = useState<DroppedLabel[]>([])
   const [deletedAggs, setDeletedAggs] = useState<Aggregation[]>([]);
+  const [deletedLabels, setDeletedLabels] = useState<{ id: number; label: string }[]>([]);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
   const styles = useStyles2(getStyles);
@@ -42,6 +43,23 @@ function App(props: AppRootProps) {
 
   const handleUndoDeleteAgg = (agg: Aggregation) => {
     setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
+  };
+
+  const handleDeleteLabel = (entry: DroppedLabel, label: string) => {
+    setDeletedLabels(prev => [...prev, { id: entry.id, label }]);
+  };
+
+  const handleUndoDeleteLabel = (entry: DroppedLabel, label: string) => {
+    setDeletedLabels(prev => prev.filter(d => !(d.id === entry.id && d.label === label)));
+  };
+
+  const handleDeleteLabels = async () => {
+    const labelIds = [...new Set(deletedLabels.map(d => d.id))];
+    try {
+      await axios.delete(`${apiUrl}/api/aggregations`, { data: labelIds });
+    } catch (err) {
+      console.error('Failed to send deleted labels:', err);
+    }
   };
 
   const handleDeleteAggs = async() => {
@@ -189,11 +207,17 @@ function App(props: AppRootProps) {
           <div className={styles.container}>
             <ul className={styles.list}>
               {droppedLabels.map(entry => (
-                <DroppedLabelItem key={entry.id} entry={entry} />
+                <DroppedLabelItem
+                  key={entry.id}
+                  entry={entry}
+                  deletedLabels={deletedLabels}
+                  handleDeleteLabel={handleDeleteLabel}
+                  handleUndoDeleteLabel={handleUndoDeleteLabel}
+                />
               ))}
             </ul>
             <div className={styles.submitRow}>
-              <Button variant="primary" onClick={() => {}}>Submit</Button>
+              <Button variant="primary" onClick={handleDeleteLabels}>Submit</Button>
             </div>
           </div>
         )}
