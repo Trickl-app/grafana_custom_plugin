@@ -8,6 +8,7 @@ import { getStyles } from './styles';
 import RecommendationItem from './RecommendationItem';
 import Selections from './Selections';
 import AggregationItem from './AggregationItem';
+import AiInvestigator from './AiInvestigator';
 
 // const submitSelections = async (apiUrl: string, output: AcceptedLabels) => {
 //   await axios.post(`${apiUrl}/api/acceptedRecommendations`, output);
@@ -139,6 +140,11 @@ function App(props: AppRootProps) {
           active={activeTab === 'droppedLabels'}
           onChangeTab={() => setActiveTab('droppedLabels')}
         />
+        <Tab
+          label="AI Investigator"
+          active={activeTab === 'investigator'}
+          onChangeTab={() => setActiveTab('investigator')}
+        />
       </TabsBar>
       <TabContent>
         {activeTab === 'recommendations' && (
@@ -184,6 +190,9 @@ function App(props: AppRootProps) {
           <div className={styles.container}>
             <p>Dropped Labels page coming soon.</p>
           </div>
+        )}
+        {activeTab === 'investigator' && (
+          <AiInvestigator apiUrl={apiUrl} />
         )}
       </TabContent>
     </>
