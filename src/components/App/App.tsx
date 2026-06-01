@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { AppRootProps } from '@grafana/data';
-import { Button, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
+import { AppRootProps, AppEvents } from '@grafana/data';
+import { getDataSourceSrv, getAppEvents } from '@grafana/runtime';
+import { Button, Spinner, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
-import { ActiveTab, Recommendation, AcceptedLabels, Aggregation, DroppedLabel } from './types';
+import { ActiveTab, Recommendation, AcceptedLabels, Rule, DroppedLabel } from './types';
 import { getStyles } from './styles';
 import RecommendationItem from './RecommendationItem';
 import Selections from './Selections';
@@ -20,13 +21,19 @@ import AiInvestigator from './AiInvestigator';
 function App(props: AppRootProps) {
   // apiUrl is provisioned at container startup via apps.yaml → SMART_METRICS_API_URL.
   // Fallback to localhost only for local development (docker-compose).
-  const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
+  // In ECS the SmartMetrics datasource is provisioned, so requests route through
+  // Grafana's server-side proxy — smart-metrics is never directly reachable from
+  // the browser. Falls back to localhost for local development.
+  const dsSettings = getDataSourceSrv().getInstanceSettings('SmartMetrics');
+  const apiUrl = dsSettings ? `/api/datasources/proxy/uid/${dsSettings.uid}` : 'http://localhost:3001';
+  //const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
   const [activeTab, setActiveTab] = useState<ActiveTab>('recommendations');
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [aggs, setAggs] = useState<Aggregation[]>([]);
+  const [aggs, setAggs] = useState<Rule[]>([]);
   const [droppedLabels, setDroppedLabels] = useState<DroppedLabel[]>([])
-  const [deletedAggs, setDeletedAggs] = useState<Aggregation[]>([]);
+  const [deletedAggs, setDeletedAggs] = useState<Rule[]>([]);
   const [deletedLabels, setDeletedLabels] = useState<{ id: number; label: string }[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
   const styles = useStyles2(getStyles);
@@ -46,19 +53,23 @@ function App(props: AppRootProps) {
 
   const getAndSetAggsAndDroppedLabels = async () => {
     try {
-      const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
-      const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
-      const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
+      const response = await axios.get<Rule[]>(`${apiUrl}/api/rules`);
+      const aggregations: Rule[] = response.data.filter(rule => rule.aggregated)
+      const droppedLabels: Rule[] = response.data.filter(rule => !rule.aggregated)
       setAggs([...aggregations]);
       setDroppedLabels([...droppedLabels])
     } catch (err) {
-      console.error('Failed to fetch aggregations:', err);
+      console.error('Failed to fetch rules:', err);
     }
   };
 
   const fetchData = async () => {
-    await getAndSetRecs();
-    await getAndSetAggsAndDroppedLabels();
+    try {
+      await getAndSetRecs();
+      await getAndSetAggsAndDroppedLabels();
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -73,11 +84,11 @@ function App(props: AppRootProps) {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'declined' } : currRec));
   };
 
-  const handleDeleteAgg = (agg: Aggregation) => {
+  const handleDeleteAgg = (agg: Rule) => {
     setDeletedAggs(prev => [...prev, agg]);
   };
 
-  const handleUndoDeleteAgg = (agg: Aggregation) => {
+  const handleUndoDeleteAgg = (agg: Rule) => {
     setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
   };
 
@@ -92,21 +103,26 @@ function App(props: AppRootProps) {
   const handleDeleteLabels = async () => {
     const labelIds = [...new Set(deletedLabels.map(d => d.id))];
     try {
-      await axios.delete(`${apiUrl}/api/aggregations`, { data: labelIds });
+      await axios.delete(`${apiUrl}/api/rules`, { data: labelIds });
+      getAppEvents().publish({ type: AppEvents.alertSuccess.name, payload: ['Dropped labels deleted successfully. Redirecting to recommendations.'] });
       setDeletedLabels([]);
-      await fetchData();
+      setDroppedLabels(prev => prev.filter(entry => !labelIds.includes(entry.id)));
+      await getAndSetRecs();
+      setActiveTab('recommendations');
     } catch (err) {
       console.error('Failed to send deleted labels:', err);
     }
   };
 
-  const handleDeleteAggs = async() => {
+  const handleDeleteAggs = async () => {
     const aggIds = deletedAggs.map(agg => agg.id);
-    console.log(aggIds)
     try {
-      await axios.delete(`${apiUrl}/api/aggregations`, { data: aggIds });
+      await axios.delete(`${apiUrl}/api/rules`, { data: aggIds });
+      getAppEvents().publish({ type: AppEvents.alertSuccess.name, payload: ['Aggregations deleted successfully. Redirecting to recommendations.'] });
       setDeletedAggs([]);
-      await fetchData();
+      setAggs(prev => prev.filter(agg => !aggIds.includes(agg.id)));
+      await getAndSetRecs();
+      setActiveTab('recommendations');
     } catch (err) {
       console.error('Failed to send deleted aggregations:', err);
     }
@@ -183,7 +199,8 @@ function App(props: AppRootProps) {
       <TabContent>
         {activeTab === 'recommendations' && (
           <div className={styles.container}>
-            {recs.length === 0 ? (
+            {/* loading animation while awaiting initial recommendations fetch */}
+            {loading ? <Spinner /> : recs.length === 0 ? (
               <p>No recommendations at this time. Your metrics system is running efficiently with no high-cardinality issues detected.</p>
             ) : (
               <>

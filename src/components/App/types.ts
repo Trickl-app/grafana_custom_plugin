@@ -20,10 +20,11 @@ export interface AcceptedLabels {
   };
 }
 
-export interface Aggregation {
+export interface Rule {
   id: number;
   metric_name: string;
   labels: string[];
+  aggregated: boolean;
   json_snippet: {
     match: string,
     outputs: string[],
