@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { AppRootProps } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
+import { AppRootProps, AppEvents } from '@grafana/data';
+import { getDataSourceSrv, getAppEvents } from '@grafana/runtime';
+import { Button, Spinner, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
 import { ActiveTab, Recommendation, AcceptedLabels, Rule, DroppedLabel } from './types';
@@ -33,6 +33,7 @@ function App(props: AppRootProps) {
   const [droppedLabels, setDroppedLabels] = useState<DroppedLabel[]>([])
   const [deletedAggs, setDeletedAggs] = useState<Rule[]>([]);
   const [deletedLabels, setDeletedLabels] = useState<{ id: number; label: string }[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
   const styles = useStyles2(getStyles);
@@ -63,8 +64,12 @@ function App(props: AppRootProps) {
   };
 
   const fetchData = async () => {
-    await getAndSetRecs();
-    await getAndSetAggsAndDroppedLabels();
+    try {
+      await getAndSetRecs();
+      await getAndSetAggsAndDroppedLabels();
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -99,9 +104,11 @@ function App(props: AppRootProps) {
     const labelIds = [...new Set(deletedLabels.map(d => d.id))];
     try {
       await axios.delete(`${apiUrl}/api/rules`, { data: labelIds });
+      getAppEvents().publish({ type: AppEvents.alertSuccess.name, payload: ['Dropped labels deleted successfully. Redirecting to recommendations.'] });
       setDeletedLabels([]);
       setDroppedLabels(prev => prev.filter(entry => !labelIds.includes(entry.id)));
       await getAndSetRecs();
+      setActiveTab('recommendations');
     } catch (err) {
       console.error('Failed to send deleted labels:', err);
     }
@@ -111,9 +118,11 @@ function App(props: AppRootProps) {
     const aggIds = deletedAggs.map(agg => agg.id);
     try {
       await axios.delete(`${apiUrl}/api/rules`, { data: aggIds });
+      getAppEvents().publish({ type: AppEvents.alertSuccess.name, payload: ['Aggregations deleted successfully. Redirecting to recommendations.'] });
       setDeletedAggs([]);
       setAggs(prev => prev.filter(agg => !aggIds.includes(agg.id)));
       await getAndSetRecs();
+      setActiveTab('recommendations');
     } catch (err) {
       console.error('Failed to send deleted aggregations:', err);
     }
@@ -190,7 +199,8 @@ function App(props: AppRootProps) {
       <TabContent>
         {activeTab === 'recommendations' && (
           <div className={styles.container}>
-            {recs.length === 0 ? (
+            {/* loading animation while awaiting initial recommendations fetch */}
+            {loading ? <Spinner /> : recs.length === 0 ? (
               <p>No recommendations at this time. Your metrics system is running efficiently with no high-cardinality issues detected.</p>
             ) : (
               <>
