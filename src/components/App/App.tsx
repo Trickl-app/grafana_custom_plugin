@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppRootProps } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
@@ -20,7 +21,12 @@ import AiInvestigator from './AiInvestigator';
 function App(props: AppRootProps) {
   // apiUrl is provisioned at container startup via apps.yaml → SMART_METRICS_API_URL.
   // Fallback to localhost only for local development (docker-compose).
-  const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
+  // In ECS the SmartMetrics datasource is provisioned, so requests route through
+  // Grafana's server-side proxy — smart-metrics is never directly reachable from
+  // the browser. Falls back to localhost for local development.
+  const dsSettings = getDataSourceSrv().getInstanceSettings('SmartMetrics');
+  const apiUrl = dsSettings ? `/api/datasources/proxy/uid/${dsSettings.uid}` : 'http://localhost:3001';
+  //const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
   const [activeTab, setActiveTab] = useState<ActiveTab>('recommendations');
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [aggs, setAggs] = useState<Rule[]>([]);
