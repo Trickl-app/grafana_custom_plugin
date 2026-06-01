@@ -116,36 +116,42 @@ function App(props: AppRootProps) {
     setShowSelections(true);
   };
 
+  const getAndSetRecs = async () => {
+    if (process.env.NODE_ENV === 'development') {
+      setRecs(mockRecs.sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
+      return;
+    }
+    try {
+      const res = await axios.get<Recommendation[]>(`${apiUrl}/api/recommendations`);
+      setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
+    } catch (err) {
+      console.error('Failed to fetch recommendations:', err);
+    }
+  };
+
+  const getAndSetAggsAndDroppedLabels = async () => {
+    try {
+      const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
+      const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
+      const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
+      setAggs([...aggregations]);
+      setDroppedLabels([...droppedLabels])
+    } catch (err) {
+      console.error('Failed to fetch aggregations:', err);
+    }
+  };
+
+  const fetchData = async () => {
+    await getAndSetRecs();
+    await getAndSetAggsAndDroppedLabels();
+  };
+
   useEffect(() => {
-    const getAndSetRecs = async () => {
-      if (process.env.NODE_ENV === 'development') {
-        setRecs(mockRecs.sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
-        return;
-      }
-      try {
-        const res = await axios.get<Recommendation[]>(`${apiUrl}/api/recommendations`);
-        setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
-      } catch (err) {
-        console.error('Failed to fetch recommendations:', err);
-      }
-    };
-    const getAndSetAggsAndDroppedLabels = async () => {
-      try {
-        const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
-        const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
-        const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
-        setAggs([...aggregations]);
-        setDroppedLabels([...droppedLabels])
-      } catch (err) {
-        console.error('Failed to fetch aggregations:', err);
-      }
-    };
-    getAndSetRecs();
-    getAndSetAggsAndDroppedLabels();
+    fetchData();
   }, []);
 
   if (showSelections) {
-    return <Selections selections={selections} setSelections={setSelections} apiUrl={apiUrl} onBack={() => setShowSelections(false)} />;
+    return <Selections selections={selections} setSelections={setSelections} apiUrl={apiUrl} onBack={() => setShowSelections(false)} onRefresh={fetchData} />;
   }
 
   return (
@@ -175,23 +181,29 @@ function App(props: AppRootProps) {
       <TabContent>
         {activeTab === 'recommendations' && (
           <div className={styles.container}>
-            <ul className={styles.list}>
-              {recs.map(rec => (
-                <RecommendationItem
-                  key={rec.metric_name + ' ' + rec.problem_label}
-                  rec={rec}
-                  handleAccept={handleAccept}
-                  handleDecline={handleDecline}
-                  handleReset={handleReset}
-                />
-              ))}
-            </ul>
-            <div className={styles.submitRow}>
-              <Button variant="primary" onClick={handleProceed}>Proceed</Button>
-              <Button variant="secondary" onClick={handleAcceptAll}>Mark all accepted</Button>
-              <Button variant="secondary" onClick={handleDeclineAll}>Mark all declined</Button>
-              <Button variant="secondary" onClick={handleResetAll}>Reset all</Button>
-            </div>
+            {recs.length === 0 ? (
+              <p>No recommendations at this time. Your metrics system is running efficiently with no high-cardinality issues detected.</p>
+            ) : (
+              <>
+                <ul className={styles.list}>
+                  {recs.map(rec => (
+                    <RecommendationItem
+                      key={rec.metric_name + ' ' + rec.problem_label}
+                      rec={rec}
+                      handleAccept={handleAccept}
+                      handleDecline={handleDecline}
+                      handleReset={handleReset}
+                    />
+                  ))}
+                </ul>
+                <div className={styles.submitRow}>
+                  <Button variant="primary" onClick={handleProceed}>Proceed</Button>
+                  <Button variant="secondary" onClick={handleAcceptAll}>Mark all accepted</Button>
+                  <Button variant="secondary" onClick={handleDeclineAll}>Mark all declined</Button>
+                  <Button variant="secondary" onClick={handleResetAll}>Reset all</Button>
+                </div>
+              </>
+            )}
           </div>
         )}
         {activeTab === 'aggregations' && (
