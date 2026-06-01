@@ -31,6 +31,40 @@ function App(props: AppRootProps) {
   const [selections, setSelections] = useState<AcceptedLabels>({});
   const styles = useStyles2(getStyles);
 
+  const getAndSetRecs = async () => {
+    if (process.env.NODE_ENV === 'development') {
+      setRecs(mockRecs.sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
+      return;
+    }
+    try {
+      const res = await axios.get<Recommendation[]>(`${apiUrl}/api/recommendations`);
+      setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
+    } catch (err) {
+      console.error('Failed to fetch recommendations:', err);
+    }
+  };
+
+  const getAndSetAggsAndDroppedLabels = async () => {
+    try {
+      const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
+      const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
+      const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
+      setAggs([...aggregations]);
+      setDroppedLabels([...droppedLabels])
+    } catch (err) {
+      console.error('Failed to fetch aggregations:', err);
+    }
+  };
+
+  const fetchData = async () => {
+    await getAndSetRecs();
+    await getAndSetAggsAndDroppedLabels();
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const handleAccept = (rec: Recommendation) => {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'accepted' } : currRec));
   };
@@ -59,6 +93,8 @@ function App(props: AppRootProps) {
     const labelIds = [...new Set(deletedLabels.map(d => d.id))];
     try {
       await axios.delete(`${apiUrl}/api/aggregations`, { data: labelIds });
+      setDeletedLabels([]);
+      await fetchData();
     } catch (err) {
       console.error('Failed to send deleted labels:', err);
     }
@@ -66,11 +102,11 @@ function App(props: AppRootProps) {
 
   const handleDeleteAggs = async() => {
     const aggIds = deletedAggs.map(agg => agg.id);
-    const aggsKept = aggs.filter(agg => !deletedAggs.includes(agg))
     console.log(aggIds)
     try {
       await axios.delete(`${apiUrl}/api/aggregations`, { data: aggIds });
-      setAggs(aggsKept)
+      setDeletedAggs([]);
+      await fetchData();
     } catch (err) {
       console.error('Failed to send deleted aggregations:', err);
     }
@@ -115,40 +151,6 @@ function App(props: AppRootProps) {
     setSelections(output);
     setShowSelections(true);
   };
-
-  const getAndSetRecs = async () => {
-    if (process.env.NODE_ENV === 'development') {
-      setRecs(mockRecs.sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
-      return;
-    }
-    try {
-      const res = await axios.get<Recommendation[]>(`${apiUrl}/api/recommendations`);
-      setRecs([...res.data].sort((a, b) => b.estimated_reduction_percent - a.estimated_reduction_percent));
-    } catch (err) {
-      console.error('Failed to fetch recommendations:', err);
-    }
-  };
-
-  const getAndSetAggsAndDroppedLabels = async () => {
-    try {
-      const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
-      const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
-      const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
-      setAggs([...aggregations]);
-      setDroppedLabels([...droppedLabels])
-    } catch (err) {
-      console.error('Failed to fetch aggregations:', err);
-    }
-  };
-
-  const fetchData = async () => {
-    await getAndSetRecs();
-    await getAndSetAggsAndDroppedLabels();
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   if (showSelections) {
     return <Selections selections={selections} setSelections={setSelections} apiUrl={apiUrl} onBack={() => setShowSelections(false)} onRefresh={fetchData} />;
