@@ -66,9 +66,11 @@ function App(props: AppRootProps) {
 
   const handleDeleteAggs = async() => {
     const aggIds = deletedAggs.map(agg => agg.id);
+    const aggsKept = aggs.filter(agg => !deletedAggs.includes(agg))
     console.log(aggIds)
     try {
       await axios.delete(`${apiUrl}/api/aggregations`, { data: aggIds });
+      setAggs(aggsKept)
     } catch (err) {
       console.error('Failed to send deleted aggregations:', err);
     }
