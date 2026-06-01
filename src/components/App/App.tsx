@@ -3,7 +3,7 @@ import { AppRootProps } from '@grafana/data';
 import { Button, Tab, TabsBar, TabContent, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { mockRecs } from './mockData';
-import { ActiveTab, Recommendation, AcceptedLabels, Aggregation, DroppedLabel } from './types';
+import { ActiveTab, Recommendation, AcceptedLabels, Rule, DroppedLabel } from './types';
 import { getStyles } from './styles';
 import RecommendationItem from './RecommendationItem';
 import Selections from './Selections';
@@ -23,9 +23,9 @@ function App(props: AppRootProps) {
   const apiUrl = (props.meta.jsonData as { apiUrl?: string })?.apiUrl ?? 'http://localhost:3001';
   const [activeTab, setActiveTab] = useState<ActiveTab>('recommendations');
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [aggs, setAggs] = useState<Aggregation[]>([]);
+  const [aggs, setAggs] = useState<Rule[]>([]);
   const [droppedLabels, setDroppedLabels] = useState<DroppedLabel[]>([])
-  const [deletedAggs, setDeletedAggs] = useState<Aggregation[]>([]);
+  const [deletedAggs, setDeletedAggs] = useState<Rule[]>([]);
   const [deletedLabels, setDeletedLabels] = useState<{ id: number; label: string }[]>([]);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
@@ -46,13 +46,13 @@ function App(props: AppRootProps) {
 
   const getAndSetAggsAndDroppedLabels = async () => {
     try {
-      const response = await axios.get<Aggregation[]>(`${apiUrl}/api/rules`);
-      const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
-      const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
+      const response = await axios.get<Rule[]>(`${apiUrl}/api/rules`);
+      const aggregations: Rule[] = response.data.filter(rule => rule.aggregated)
+      const droppedLabels: Rule[] = response.data.filter(rule => !rule.aggregated)
       setAggs([...aggregations]);
       setDroppedLabels([...droppedLabels])
     } catch (err) {
-      console.error('Failed to fetch aggregations:', err);
+      console.error('Failed to fetch rules:', err);
     }
   };
 
@@ -73,11 +73,11 @@ function App(props: AppRootProps) {
     setRecs(prev => prev.map(currRec => currRec === rec ? { ...rec, status: 'declined' } : currRec));
   };
 
-  const handleDeleteAgg = (agg: Aggregation) => {
+  const handleDeleteAgg = (agg: Rule) => {
     setDeletedAggs(prev => [...prev, agg]);
   };
 
-  const handleUndoDeleteAgg = (agg: Aggregation) => {
+  const handleUndoDeleteAgg = (agg: Rule) => {
     setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
   };
 
@@ -94,19 +94,20 @@ function App(props: AppRootProps) {
     try {
       await axios.delete(`${apiUrl}/api/rules`, { data: labelIds });
       setDeletedLabels([]);
-      await fetchData();
+      setDroppedLabels(prev => prev.filter(entry => !labelIds.includes(entry.id)));
+      await getAndSetRecs();
     } catch (err) {
       console.error('Failed to send deleted labels:', err);
     }
   };
 
-  const handleDeleteAggs = async() => {
+  const handleDeleteAggs = async () => {
     const aggIds = deletedAggs.map(agg => agg.id);
-    console.log(aggIds)
     try {
       await axios.delete(`${apiUrl}/api/rules`, { data: aggIds });
       setDeletedAggs([]);
-      await fetchData();
+      setAggs(prev => prev.filter(agg => !aggIds.includes(agg.id)));
+      await getAndSetRecs();
     } catch (err) {
       console.error('Failed to send deleted aggregations:', err);
     }
