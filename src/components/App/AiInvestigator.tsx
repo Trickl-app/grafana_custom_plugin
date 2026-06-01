@@ -46,7 +46,7 @@ function AiInvestigator({ apiUrl }: AiInvestigatorProps) {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <div className={styles.metricName}>Ask Metropolis</div>
+        <div className={styles.metricName}>Ask Trickl</div>
         <textarea
           className={styles.textArea}
           value={question}

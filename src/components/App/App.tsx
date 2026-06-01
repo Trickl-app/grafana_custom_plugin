@@ -194,38 +194,50 @@ function App(props: AppRootProps) {
         )}
         {activeTab === 'aggregations' && (
           <div className={styles.container}>
-            <ul className={styles.list}>
-              {aggs.map(agg => (
-                <AggregationItem
-                  key={agg.metric_name + ' ' + agg.labels}
-                  agg={agg}
-                  deletedAggs={deletedAggs}
-                  handleDeleteAgg={handleDeleteAgg}
-                  handleUndoDeleteAgg={handleUndoDeleteAgg}
-                />
-              ))}
-            </ul>
-            <div className={styles.submitRow}>
-              <Button variant="primary" onClick={handleDeleteAggs}>Submit</Button>
-            </div>
+            {aggs.length === 0 ? (
+              <p>No aggregations to display.</p>
+            ) : (
+              <>
+                <ul className={styles.list}>
+                  {aggs.map(agg => (
+                    <AggregationItem
+                      key={agg.metric_name + ' ' + agg.labels}
+                      agg={agg}
+                      deletedAggs={deletedAggs}
+                      handleDeleteAgg={handleDeleteAgg}
+                      handleUndoDeleteAgg={handleUndoDeleteAgg}
+                    />
+                  ))}
+                </ul>
+                <div className={styles.submitRow}>
+                  <Button variant="primary" onClick={handleDeleteAggs}>Submit</Button>
+                </div>
+              </>
+            )}
           </div>
         )}
         {activeTab === 'droppedLabels' && (
           <div className={styles.container}>
-            <ul className={styles.list}>
-              {droppedLabels.map(entry => (
-                <DroppedLabelItem
-                  key={entry.id}
-                  entry={entry}
-                  deletedLabels={deletedLabels}
-                  handleDeleteLabel={handleDeleteLabel}
-                  handleUndoDeleteLabel={handleUndoDeleteLabel}
-                />
-              ))}
-            </ul>
-            <div className={styles.submitRow}>
-              <Button variant="primary" onClick={handleDeleteLabels}>Submit</Button>
-            </div>
+            {droppedLabels.length === 0 ? (
+              <p>No dropped labels to display.</p>
+            ) : (
+              <>
+                <ul className={styles.list}>
+                  {droppedLabels.map(entry => (
+                    <DroppedLabelItem
+                      key={entry.id}
+                      entry={entry}
+                      deletedLabels={deletedLabels}
+                      handleDeleteLabel={handleDeleteLabel}
+                      handleUndoDeleteLabel={handleUndoDeleteLabel}
+                    />
+                  ))}
+                </ul>
+                <div className={styles.submitRow}>
+                  <Button variant="primary" onClick={handleDeleteLabels}>Submit</Button>
+                </div>
+              </>
+            )}
           </div>
         )}
         {activeTab === 'investigator' && (
