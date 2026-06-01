@@ -9,6 +9,7 @@ interface SelectionsProps {
   setSelections: React.Dispatch<React.SetStateAction<AcceptedLabels>>;
   apiUrl: string;
   onBack: () => void;
+  onRefresh: () => Promise<void>;
 }
 
 const modeOptions = [
@@ -22,7 +23,7 @@ const intervalOptions: Array<ComboboxOption<string>> = [
   { label: '15m', value: '15m' },
 ];
 
-function Selections({ selections, setSelections, apiUrl, onBack }: SelectionsProps) {
+function Selections({ selections, setSelections, apiUrl, onBack, onRefresh }: SelectionsProps) {
   const styles = useStyles2(getStyles);
 
   const handleModeChange = (metricName: string, aggregate: boolean) => {
@@ -48,6 +49,8 @@ function Selections({ selections, setSelections, apiUrl, onBack }: SelectionsPro
     console.log(selections);
     await axios.post(`${apiUrl}/api/acceptedRecommendations`, selections);
     alert('The bike is operational! Check the VM Agent yaml file; it should now reflect your accepted recommendations.');
+    await onRefresh();
+    onBack();
   };
 
   return (
