@@ -46,7 +46,7 @@ function App(props: AppRootProps) {
 
   const getAndSetAggsAndDroppedLabels = async () => {
     try {
-      const response = await axios.get<Aggregation[]>(`${apiUrl}/api/aggregations`);
+      const response = await axios.get<Aggregation[]>(`${apiUrl}/api/rules`);
       const aggregations: Aggregation[] = response.data.filter(aggregation => aggregation.json_snippet.aggregate)
       const droppedLabels: Aggregation[] = response.data.filter(aggregation => !aggregation.json_snippet.aggregate)
       setAggs([...aggregations]);
@@ -92,7 +92,7 @@ function App(props: AppRootProps) {
   const handleDeleteLabels = async () => {
     const labelIds = [...new Set(deletedLabels.map(d => d.id))];
     try {
-      await axios.delete(`${apiUrl}/api/aggregations`, { data: labelIds });
+      await axios.delete(`${apiUrl}/api/rules`, { data: labelIds });
       setDeletedLabels([]);
       await fetchData();
     } catch (err) {
@@ -104,7 +104,7 @@ function App(props: AppRootProps) {
     const aggIds = deletedAggs.map(agg => agg.id);
     console.log(aggIds)
     try {
-      await axios.delete(`${apiUrl}/api/aggregations`, { data: aggIds });
+      await axios.delete(`${apiUrl}/api/rules`, { data: aggIds });
       setDeletedAggs([]);
       await fetchData();
     } catch (err) {
