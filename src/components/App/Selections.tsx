@@ -1,4 +1,6 @@
 import React from 'react';
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { Button, Combobox, ComboboxOption, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import axios from 'axios';
 import { AcceptedLabels } from './types';
@@ -48,7 +50,7 @@ function Selections({ selections, setSelections, apiUrl, onBack, onRefresh }: Se
     event.preventDefault();
     console.log(selections);
     await axios.post(`${apiUrl}/api/acceptedRecommendations`, selections);
-    alert('The bike is operational! Check the VM Agent yaml file; it should now reflect your accepted recommendations.');
+    getAppEvents().publish({ type: AppEvents.alertSuccess.name, payload: ['Recommendations submitted successfully. Redirecting to recommendations.'] });
     await onRefresh();
     onBack();
   };
