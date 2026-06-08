@@ -24,7 +24,7 @@ function RecommendationItem({ rec, handleAccept, handleDecline, handleReset }: R
   };
 
   return (
-    <li className={styles.card}>
+    <li className={`${styles.card} ${rec.isPrimeTarget ? styles.cardPrimeTarget : ''}`}>
       <div className={styles.metricName}>Metric Name: {rec.metric_name}</div>
       <div className={styles.detail}>Problem label: {rec.problem_label}</div>
       <div className={styles.detail}>
