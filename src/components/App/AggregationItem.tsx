@@ -1,13 +1,13 @@
 import React from 'react';
-import { Aggregation } from './types';
+import { Rule } from './types';
 import { Button, useStyles2 } from '@grafana/ui';
 import { getStyles } from './styles';
 
 interface AggregationItemProps {
-  agg: Aggregation;
-  deletedAggs: Aggregation[];
-  handleDeleteAgg: (agg: Aggregation) => void;
-  handleUndoDeleteAgg: (agg: Aggregation) => void;
+  agg: Rule;
+  deletedAggs: Rule[];
+  handleDeleteAgg: (agg: Rule) => void;
+  handleUndoDeleteAgg: (agg: Rule) => void;
 }
 
 function AggregationItem({ agg, deletedAggs, handleDeleteAgg, handleUndoDeleteAgg }: AggregationItemProps) {
@@ -20,7 +20,7 @@ function AggregationItem({ agg, deletedAggs, handleDeleteAgg, handleUndoDeleteAg
         <div className={styles.metricName}>Metric Name: {agg.metric_name}</div>
         <div className={styles.detail}>Interval: {agg.json_snippet.interval}</div>
         {agg.labels.length > 0 && (
-          <div className={styles.detail}>Problem Labels: {agg.labels}</div>
+          <div className={styles.detail}>Problem label/s: {agg.labels.join(', ')}</div>
         )}
         <div className={styles.actions}>
           {isDeleted ? (

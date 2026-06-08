@@ -32,7 +32,7 @@ function App(props: AppRootProps) {
   const [aggs, setAggs] = useState<Rule[]>([]);
   const [droppedLabels, setDroppedLabels] = useState<DroppedLabel[]>([])
   const [deletedAggs, setDeletedAggs] = useState<Rule[]>([]);
-  const [deletedLabels, setDeletedLabels] = useState<{ id: number; label: string }[]>([]);
+  const [deletedLabels, setDeletedLabels] = useState<DroppedLabel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSelections, setShowSelections] = useState(false);
   const [selections, setSelections] = useState<AcceptedLabels>({});
@@ -92,12 +92,12 @@ function App(props: AppRootProps) {
     setDeletedAggs(prev => prev.filter(d => d.metric_name !== agg.metric_name));
   };
 
-  const handleDeleteLabel = (entry: DroppedLabel, label: string) => {
-    setDeletedLabels(prev => [...prev, { id: entry.id, label }]);
+  const handleDeleteLabel = (entry: DroppedLabel) => {
+    setDeletedLabels(prev => [...prev, entry]);
   };
 
-  const handleUndoDeleteLabel = (entry: DroppedLabel, label: string) => {
-    setDeletedLabels(prev => prev.filter(d => !(d.id === entry.id && d.label === label)));
+  const handleUndoDeleteLabel = (entry: DroppedLabel) => {
+    setDeletedLabels(prev => prev.filter(d => d.id !== entry.id));
   };
 
   const handleDeleteLabels = async () => {
