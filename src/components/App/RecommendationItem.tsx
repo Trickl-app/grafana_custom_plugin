@@ -28,7 +28,10 @@ function RecommendationItem({ rec, handleAccept, handleDecline, handleReset }: R
       <div className={styles.metricName}>Metric Name: {rec.metric_name}</div>
       <div className={styles.detail}>Problem label: {rec.problem_label}</div>
       <div className={styles.detail}>
-        Series: {rec.estimated_current_series} → {rec.estimated_after_series} ({rec.estimated_reduction_percent}% reduction)
+        {rec.isPrimeTarget
+          ? `Series: ${rec.estimated_current_series} → ${rec.estimated_after_series} (${rec.estimated_reduction_percent}% reduction)`
+          : `Current series: ${rec.estimated_current_series} — high cardinality label`
+        }
       </div>
       <div className={styles.explanation}>{rec.explanation}</div>
       {rec.status === 'pending' ? (
