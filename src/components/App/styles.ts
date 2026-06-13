@@ -24,6 +24,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     border-radius: ${theme.shape.borderRadius(2)};
     padding: ${theme.spacing(2)};
   `,
+  cardPrimeTarget: css`
+    border-left: 3px solid ${theme.colors.warning.main};
+    background: ${theme.colors.warning.transparent};
+  `,
   metricName: css`
     font-size: ${theme.typography.h5.fontSize};
     font-weight: ${theme.typography.fontWeightMedium};
