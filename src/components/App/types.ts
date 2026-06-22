@@ -9,7 +9,7 @@ export interface Recommendation {
   estimated_after_series: number;
   estimated_reduction_percent: number;
   explanation: string;
-  isPrimeTarget: boolean;
+  is_prime_target: boolean;
 }
 
 export interface AcceptedLabels {

@@ -24,11 +24,11 @@ function RecommendationItem({ rec, handleAccept, handleDecline, handleReset }: R
   };
 
   return (
-    <li className={`${styles.card} ${rec.isPrimeTarget ? styles.cardPrimeTarget : ''}`}>
+    <li className={`${styles.card} ${rec.is_prime_target ? styles.cardPrimeTarget : ''}`}>
       <div className={styles.metricName}>Metric Name: {rec.metric_name}</div>
       <div className={styles.detail}>Problem label: {rec.problem_label}</div>
       <div className={styles.detail}>
-        {rec.isPrimeTarget
+        {rec.is_prime_target
           ? `Series: ${rec.estimated_current_series} → ${rec.estimated_after_series} (${rec.estimated_reduction_percent}% reduction)`
           : `Current series: ${rec.estimated_current_series} — high cardinality label`
         }
